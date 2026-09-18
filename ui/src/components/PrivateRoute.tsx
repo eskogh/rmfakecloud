@@ -30,7 +30,7 @@ export const PrivateRoute = ({
         }
 
         // check if route is restricted by role
-        if (roles && user.Roles && roles.indexOf(user.Roles[0]) === -1) {
+        if (roles && !roles.some(role => user.Roles?.includes(role))) {
           // role not authorised ==> logout
           logout(dispatch);
           return <Redirect to={{ pathname: "/login" }} />;

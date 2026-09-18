@@ -51,6 +51,9 @@ func (fs *FileSystemStorage) getPathFromUser(uid, path string) string {
 
 // ExportDocument Exports a document to the outputType
 func (fs *FileSystemStorage) ExportDocument(uid, id, outputType string, exportOption storage.ExportOption) (io.ReadCloser, error) {
+	if outputType == "rmdoc" {
+		return fs.exportOriginal(uid, id)
+	}
 	if outputType != "pdf" {
 		return nil, errors.New("todo: only pdfs supported")
 	}

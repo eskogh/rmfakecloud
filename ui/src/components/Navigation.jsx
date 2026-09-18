@@ -1,75 +1,90 @@
-import React from "react";
-import { Nav, Navbar, Button, NavDropdown, Container } from "react-bootstrap";
+import { Nav, Navbar, NavDropdown, Container } from "react-bootstrap";
+import { NavLink } from "react-router-dom";
+import {
+  BsCloud,
+  BsGrid,
+  BsFiles,
+  BsPlug,
+  BsTablet,
+  BsDisplay,
+  BsActivity,
+  BsPeople,
+} from "react-icons/bs";
 import { logout } from "../common/actions";
 import { useAuthState } from "../common/useAuthContext";
-import { NavLink } from "react-router-dom";
+import useTheme from "../common/useTheme";
 
-const NavigationBar = () => {
-  const { state:{user}, dispatch } = useAuthState();
-
-  function handleLogout(e) {
-    logout(dispatch);
-  }
-
-  function isAdmin() {
-    return user && user.Roles && user.Roles[0] === "Admin";
-  }
+export default function NavigationBar() {
+  const {
+    state: { user },
+    dispatch,
+  } = useAuthState();
+  const [theme, setTheme] = useTheme();
+  const links = [
+    ["/", "Overview", BsGrid],
+    ["/documents", "Documents", BsFiles],
+    ["/integrations", "Integrations", BsPlug],
+    ["/connect", "Connect", BsTablet],
+    ["/screenshare", "Screen share", BsDisplay],
+  ];
+  if (user?.Roles?.includes("Admin"))
+    links.push(
+      ["/health", "Health", BsActivity],
+      ["/admin", "Users", BsPeople],
+    );
   return (
-    <Navbar className="sticky-top">
+    <Navbar expand="xl" className="app-navigation" collapseOnSelect>
       <Container fluid>
-        <Navbar.Brand>
-          <Nav.Link as={NavLink} to="/">
-            rmfakecloud
-          </Nav.Link>
+        <Navbar.Brand as={NavLink} to="/" className="wordmark">
+          <span className="brand-icon">
+            <BsCloud />
+          </span>
+          rmfakecloud<span className="brand-tag">YOUR CLOUD</span>
         </Navbar.Brand>
-        <Navbar.Toggle />
+        <div className="nav-controls">
+          <label className="theme-control">
+            <span className="visually-hidden">Color theme</span>
+            <select
+              aria-label="Color theme"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+            >
+              <option value="system">System theme</option>
+              <option value="light">Light theme</option>
+              <option value="dark">Dark theme</option>
+            </select>
+          </label>
+          <Navbar.Toggle aria-controls="main-navigation" />
+        </div>
         {user && (
-          <>
-            <Navbar.Collapse>
-              <Nav>
-                {" "}
-                <Nav.Item>
-                  <Nav.Link as={NavLink} to="/documents">
-                    Documents
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link as={NavLink} to="/integrations">
-                    Integrations
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link as={NavLink} to="/connect">
-                    Connect
-                  </Nav.Link>
-                </Nav.Item>
-                <Nav.Item>
-                  <Nav.Link as={NavLink} to="/screenshare">
-                    Screen Share
-                  </Nav.Link>
-                </Nav.Item>
-				{ isAdmin() &&
-
-					<Nav.Item>
-					  <Nav.Link as={NavLink} to="/admin">
-						Admin	
-					  </Nav.Link>
-					</Nav.Item>
-				}
-              </Nav>
-              <Nav className="ms-auto">
-                <NavDropdown id="userMenu" title={user.UserID} align="end">
-                  <NavDropdown.Item as={NavLink} to="/profile">Profile</NavDropdown.Item>
-                  <NavDropdown.Divider />
-                  <NavDropdown.Item as={Button} onClick={handleLogout}>Log out</NavDropdown.Item>
-                </NavDropdown>
-              </Nav>
-            </Navbar.Collapse>
-          </>
+          <Navbar.Collapse id="main-navigation">
+            <Nav className="primary-navigation">
+              {links.map(([path, title, Icon]) => (
+                <Nav.Link
+                  key={path}
+                  eventKey={path}
+                  as={NavLink}
+                  exact={path === "/"}
+                  to={path}
+                >
+                  <Icon />
+                  <span>{title}</span>
+                </Nav.Link>
+              ))}
+            </Nav>
+            <Nav className="ms-auto">
+              <NavDropdown id="user-menu" title={user.UserID} align="end">
+                <NavDropdown.Item as={NavLink} to="/profile">
+                  Profile
+                </NavDropdown.Item>
+                <NavDropdown.Item onClick={() => logout(dispatch)}>
+                  Log out
+                </NavDropdown.Item>
+              </NavDropdown>
+            </Nav>
+          </Navbar.Collapse>
         )}
       </Container>
     </Navbar>
   );
-};
-
-export default NavigationBar;
+}

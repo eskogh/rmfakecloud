@@ -123,6 +123,13 @@ code {
   width: calc(100vw - 100px) !important;
 }
 
+@media (max-width: 768px) {
+  .navbar > .container-fluid {
+    margin: 0 16px;
+    width: calc(100% - 32px) !important;
+  }
+}
+
 .documents-tree {
   div[role=treeitem] {
     outline: none;
@@ -274,3 +281,5 @@ main h2 {
 .flex-spacer {
   flex: 1;
 }
+
+@import "./modern.scss";

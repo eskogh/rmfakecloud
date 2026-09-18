@@ -285,7 +285,10 @@ func (app *ReactAppWrapper) getDocument(c *gin.Context) {
 		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.rmdoc\"", docid))
 	}
 
-	c.DataFromReader(http.StatusOK, -1, "application/octet-stream", reader, nil)
+	contentType := "application/pdf"
+ if exportType == "rmdoc" { contentType = "application/zip" }
+ c.Header("Cache-Control", "private, no-store")
+ c.DataFromReader(http.StatusOK, -1, contentType, reader, nil)
 }
 
 func (app *ReactAppWrapper) getDocumentMetadata(c *gin.Context) {
@@ -312,7 +315,16 @@ func (app *ReactAppWrapper) updateDocument(c *gin.Context) {
 	backend := app.getBackend(c)
 	uid := userID(c)
 	log.Info(uiLogger, ui10, "updatedoc")
-	err := backend.UpdateDocument(uid, upd.DocumentID, upd.Name, upd.ParentID)
+	tree, err := backend.GetDocumentTree(uid)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, viewmodel.NewErrorResponse("Unable to load documents"))
+		return
+	}
+	if err := viewmodel.ValidateMove(tree, upd.DocumentID, upd.ParentID); err != nil {
+		badReq(c, err.Error())
+		return
+	}
+	err = backend.UpdateDocument(uid, upd.DocumentID, upd.Name, upd.ParentID)
 	if err != nil {
 		badReq(c, err.Error())
 		return
@@ -328,6 +340,7 @@ func (app *ReactAppWrapper) deleteDocument(c *gin.Context) {
 	err := backend.DeleteDocument(uid, docid)
 	if err != nil {
 		badReq(c, err.Error())
+		return
 	}
 	c.Status(http.StatusOK)
 }
@@ -893,4 +906,3 @@ func (app *ReactAppWrapper) screenshareDeleteRoom(c *gin.Context) {
 	app.roomManager.DeleteAllForUser(uid)
 	c.Status(http.StatusNoContent)
 }
-

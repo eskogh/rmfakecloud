@@ -6,15 +6,11 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      // external:["pdfjs-dist"],
       output: {
-        manualChunks: function (id) {
-          // console.log(id);
-          if (id.includes("node_modules")) {
-            if (id.includes("pdf")) return "pdf";
-            if (id.includes("react")) return "react";
-            return "vendor";
-          }
+        manualChunks(id) {
+          // Keep React and its transitive dependencies together. Splitting by
+          // package-name substrings creates cycles and breaks initialization.
+          if (id.includes("node_modules")) return "vendor";
         },
       },
     },

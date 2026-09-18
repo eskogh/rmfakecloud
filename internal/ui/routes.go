@@ -54,6 +54,7 @@ func (app *ReactAppWrapper) RegisterRoutes(router *gin.Engine) {
 		app.h.NotifySync(uid, br)
 	})
 
+	auth.GET("dashboard", app.dashboard)
 	auth.GET("newcode", app.newCode)
 
 	// passcode (PIN) reset approval
@@ -74,6 +75,16 @@ func (app *ReactAppWrapper) RegisterRoutes(router *gin.Engine) {
 	auth.PUT("documents", app.updateDocument)
 	auth.POST("folders", app.createFolder)
 	auth.GET("documents/:docid/metadata", app.getDocumentMetadata)
+
+	// Web-only library metadata, indexing, history, and backup policies.
+	auth.GET("library", app.libraryState)
+	auth.GET("library/search", app.librarySearch)
+	auth.PUT("library/metadata/:docid", app.setLibraryMetadata)
+	auth.PUT("library/policy", app.saveLibraryPolicy)
+	auth.POST("library/jobs/:kind", app.runLibraryJob)
+	auth.GET("library/documents/:docid/snapshots", app.listSnapshots)
+	auth.GET("library/snapshots/:snapshotid", app.downloadSnapshot)
+	auth.POST("library/snapshots/:snapshotid/restore", app.restoreSnapshot)
 
 	// integrations
 	auth.GET("integrations", app.listIntegrations)
@@ -96,6 +107,7 @@ func (app *ReactAppWrapper) RegisterRoutes(router *gin.Engine) {
 	//admin
 	admin := auth.Group("")
 	admin.Use(app.adminMiddleware())
+	admin.GET("health", app.health)
 	admin.GET("users/:userid", app.getUser)
 	admin.DELETE("users/:userid", app.deleteUser)
 	admin.PUT("users", app.updateUser)

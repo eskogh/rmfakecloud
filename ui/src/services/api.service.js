@@ -1,4 +1,4 @@
-import constants from "../common/constants";
+import constants from "../common/constants.js";
 import { jwtDecode } from "jwt-decode";
 
 class ApiServices {
@@ -78,8 +78,8 @@ class ApiServices {
     return fetch(`${constants.ROOT_URL}/passcode/resets`, {
       method: "GET",
       headers: this.header(),
-    }).then((r) => {
-      handleError(r);
+    }).then(async (r) => {
+      await handleError(r);
       return r.json();
     });
   }
@@ -106,12 +106,16 @@ class ApiServices {
     });
   }
 
+  resource(path, signal) {
+    return fetch(`${constants.ROOT_URL}/${path}`, { headers: this.header(), signal }).then(async r => { await handleError(r); return r.json(); });
+  }
+
   listDocument() {
     return fetch(`${constants.ROOT_URL}/documents`, {
       method: "GET",
       headers: this.header(),
-    }).then((r) => {
-      handleError(r);
+    }).then(async (r) => {
+      await handleError(r);
       return r.json();
     });
   }
@@ -119,8 +123,8 @@ class ApiServices {
     return fetch(`${constants.ROOT_URL}/newcode`, {
       method: "GET",
       headers: this.header(),
-    }).then((r) => {
-      handleError(r);
+    }).then(async (r) => {
+      await handleError(r);
       return r.json();
     });
   }
@@ -131,13 +135,20 @@ class ApiServices {
       headers: this.header(),
     }).then((r) => handleError(r));
   }
+  moveDocument(id, name, parentId) {
+    return fetch(`${constants.ROOT_URL}/documents`, {
+      method: "PUT",
+      headers: this.header(),
+      body: JSON.stringify({ documentId: id, name, parentId }),
+    }).then(handleError);
+  }
   download(id, exportType) {
     let url = `${constants.ROOT_URL}/documents/${id}`;
     if (exportType) url += `?type=${exportType}`;
     return fetch(url, {
       method: "GET",
-    }).then((r) => {
-      handleError(r);
+    }).then(async (r) => {
+      await handleError(r);
       return r.blob();
     });
   }
@@ -147,8 +158,8 @@ class ApiServices {
       method: "POST",
       headers: this.header(),
       body: JSON.stringify(data),
-    }).then((r) => {
-      handleError(r);
+    }).then(async (r) => {
+      await handleError(r);
       return r.json();
     });
   }
@@ -177,8 +188,8 @@ class ApiServices {
     return fetch(`${constants.ROOT_URL}/integrations`, {
       method: "GET",
       headers: this.header(),
-    }).then((r) => {
-      handleError(r);
+    }).then(async (r) => {
+      await handleError(r);
       return r.json();
     });
   }
@@ -208,20 +219,21 @@ function removeUser(){
   localStorage.removeItem("currentUser");
   localStorage.removeItem("authToken");
 }
-function handleError(r) {
+async function handleError(r) {
   if (!r.ok) {
     if (r.status === 401) {
       removeUser();
       window.location.reload(true);
-      return
+      throw new Error("Your session has expired. Please sign in again.");
     }
-    if (r.headers.get("Content-Type").startsWith("application/json")) {
-      return r.json().then(d => {throw new Error(d.error)});
+    if (r.headers.get("Content-Type")?.includes("application/json")) {
+      const data = await r.json();
+      throw new Error(data.error || r.statusText || `Request failed (${r.status})`);
     }
     if (r.status === 400) {
       return r.text().then(text => {throw new Error(text)})
     }
-    return Promise.reject(r.status)
+    throw new Error(r.statusText || `Request failed (${r.status})`);
   }
 }
 

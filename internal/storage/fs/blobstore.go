@@ -134,10 +134,9 @@ func (fs *FileSystemStorage) Export(uid, docid string) (r io.ReadCloser, err err
 	}
 	reader, writer := io.Pipe()
 	go func() {
-		err = exporter.RenderRmapi(archive, writer)
-		if err != nil {
-			log.Error(err)
-			writer.Close()
+		if renderErr := exporter.RenderRmapi(archive, writer); renderErr != nil {
+			log.Error(renderErr)
+			writer.CloseWithError(renderErr)
 			return
 		}
 		writer.Close()

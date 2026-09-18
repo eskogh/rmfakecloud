@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:documents": "node --test src/pages/Documents/library.test.js src/services/api.service.test.js",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

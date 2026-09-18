@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,6 +23,10 @@ type notification struct {
 
 // Hub ws notificaiton hub
 type Hub struct {
+	metricsMu     sync.RWMutex
+	connected     map[string]int
+	activity      map[string]map[string]int
+	started       time.Time
 	allClients    map[*wsClient]bool
 	userClients   map[string]map[*wsClient]bool
 	additions     chan *wsClient
@@ -176,12 +181,19 @@ func (h *Hub) send(n notification) {
 
 // ClientCount number of connected clients
 func (h *Hub) ClientCount() int {
-	return len(h.allClients)
+	h.metricsMu.RLock()
+	defer h.metricsMu.RUnlock()
+	total := 0
+	for _, n := range h.connected {
+		total += n
+	}
+	return total
 }
 
 // NewHub construct a hub
 func NewHub() *Hub {
 	h := Hub{
+		connected: make(map[string]int), activity: make(map[string]map[string]int), started: time.Now().UTC(),
 		allClients:  make(map[*wsClient]bool),
 		userClients: make(map[string]map[*wsClient]bool),
 
@@ -196,6 +208,12 @@ func NewHub() *Hub {
 func (h *Hub) removeClient(c *wsClient) {
 	if _, ok := h.allClients[c]; ok {
 		delete(h.allClients, c)
+		h.metricsMu.Lock()
+		h.connected[c.uid]--
+		if h.connected[c.uid] == 0 {
+			delete(h.connected, c.uid)
+		}
+		h.metricsMu.Unlock()
 		close(c.notifications)
 	}
 	if userclients, ok := h.userClients[c.uid]; ok {
@@ -211,6 +229,9 @@ func (h *Hub) start() {
 		case c := <-h.additions:
 			log.Debugln("hub: adding a client")
 			h.allClients[c] = true
+			h.metricsMu.Lock()
+			h.connected[c.uid]++
+			h.metricsMu.Unlock()
 			clients, ok := h.userClients[c.uid]
 			if !ok {
 				clients = make(map[*wsClient]bool)
@@ -222,6 +243,9 @@ func (h *Hub) start() {
 			h.removeClient(c)
 		case c := <-h.notifications:
 			log.Info("hub: dispatching notification")
+			if c.msg.Message.Attributes.Event == messages.SyncCompletedEvent {
+				h.recordSync(c.uid, time.Now().UTC())
+			}
 			h.send(c)
 		}
 	}
@@ -295,4 +319,44 @@ func (h *Hub) ConnectWs(uid, deviceID string, connection *websocket.Conn) {
 	close(client.done)
 
 	h.removals <- client
+}
+
+// Metrics returns a copy; it never reads the hub's connection maps concurrently.
+func (h *Hub) Metrics(uid string, all bool) (int, map[string]int, time.Time) {
+	h.metricsMu.RLock()
+	defer h.metricsMu.RUnlock()
+	counts := map[string]int{}
+	clients := 0
+	for user, n := range h.connected {
+		if all || user == uid {
+			clients += n
+		}
+	}
+	for user, days := range h.activity {
+		if all || user == uid {
+			for day, n := range days {
+				counts[day] += n
+			}
+		}
+	}
+	return clients, counts, h.started
+}
+func (h *Hub) recordSync(uid string, now time.Time) {
+	h.metricsMu.Lock()
+	defer h.metricsMu.Unlock()
+	cutoff := now.AddDate(0, 0, -6).Format("2006-01-02")
+	for user, days := range h.activity {
+		for day := range days {
+			if day < cutoff {
+				delete(days, day)
+			}
+		}
+		if len(days) == 0 {
+			delete(h.activity, user)
+		}
+	}
+	if h.activity[uid] == nil {
+		h.activity[uid] = map[string]int{}
+	}
+	h.activity[uid][now.Format("2006-01-02")]++
 }

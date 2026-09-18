@@ -46,6 +46,7 @@ type App struct {
 	hwrClient     *hwr.HWRClient
 	mqttBroker    *mqtt.Broker
 	roomManager   *screenshare.RoomManager
+	uiApp         *ui.ReactAppWrapper
 }
 
 // Start starts the app
@@ -114,8 +115,10 @@ func (app *App) Stop() {
 	if err := app.srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server Shutdown:", err)
 	}
+	if app.uiApp != nil {
+		app.uiApp.CloseLibrary()
+	}
 }
-
 
 // NewApp constructs an app
 func NewApp(cfg *config.Config) App {
@@ -181,6 +184,7 @@ func NewApp(cfg *config.Config) App {
 	app.registerRoutes(router)
 
 	uiApp := ui.New(cfg, fsStorage, codeConnector, ntfHub, pcStore, fsStorage, fsStorage, roomMgr, app.mqttBroker)
+	app.uiApp = uiApp
 	uiApp.RegisterRoutes(router)
 
 	storageapp := fs.NewApp(cfg, fsStorage)

@@ -10,6 +10,7 @@ import Navigationbar from "./components/Navigation";
 import PasscodeResets from "./components/PasscodeResets";
 
 import Login from "./pages/Login";
+import Health from "./pages/Health";
 import Home from "./pages/Home";
 import Connect from "./pages/Connect";
 import Documents from "./pages/Documents";
@@ -42,7 +43,7 @@ export default function App() {
           <div style={{display: "flex", flexDirection: "column", height: "100%"}}>
             <Navigationbar />
             <PasscodeResets />
-            <div style={{flex: "1 1 auto", minHeight: 0, overflow: "hidden"}}>
+            <div className="app-content">
               <Switch>
                 <PrivateRoute exact path="/" component={Home} />
                 <PrivateRoute path="/documents/:itemId?" component={Documents} />
@@ -52,6 +53,7 @@ export default function App() {
                 <PrivateRoute path="/integrations" component={Integrations} />
                 <PrivateRoute path="/profile" component={Profile} />
                 <PrivateRoute path="/screenshare" component={ScreenShare} />
+                <PrivateRoute path="/health" roles={[Role.Admin]} component={Health} />
                 <PrivateRoute path="/admin" roles={[Role.Admin]} component={Admin} />
 
                 <Route path="/login" component={Login} />

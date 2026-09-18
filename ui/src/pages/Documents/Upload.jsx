@@ -31,12 +31,13 @@ async function uploadFilesInBatches(files, uploadFolder, batchSize = 100) {
   }
 }
 
-export default function StyledDropzone({filesUploaded, uploadFolder}) {
+export default function StyledDropzone({filesUploaded, uploadFolder, onUploadingChange}) {
   const [uploading, setUploading] = useState(false);
 
   var onDrop = async (acceptedFiles) => {
     try {
       setUploading(true);
+      onUploadingChange?.(true);
       // TODO: add loading and error handling
       await uploadFilesInBatches(acceptedFiles, uploadFolder);
       // await delay(100)
@@ -45,6 +46,7 @@ export default function StyledDropzone({filesUploaded, uploadFolder}) {
       toast.error("upload error" + e.toString());
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
     }
   };
 
@@ -61,6 +63,8 @@ export default function StyledDropzone({filesUploaded, uploadFolder}) {
       "application/epub+zip":[],
      },
     onDropAccepted: onDrop,
+    disabled: uploading,
+    onDropRejected: files => toast.error(files[0]?.errors[0]?.message || 'This file cannot be uploaded.'),
     maxSize: 1 * 1024 * 1024 * 1024, // 1GB
   });
 

@@ -1,76 +1,151 @@
-import Container from "react-bootstrap/Container";
-
-const Home = () => {
+import { Link } from "react-router-dom";
+import {
+  BsFiles,
+  BsFolder,
+  BsHdd,
+  BsTablet,
+  BsArrowUpRight,
+} from "react-icons/bs";
+import useResource from "../../hooks/useResource";
+import {
+  Activity,
+  Metric,
+  PageHeading,
+  ResourceError,
+  bytes,
+} from "../../components/DashboardParts";
+const colors = ["#5b8def", "#39bda0", "#af8aeb", "#edb45e"];
+export default function Home() {
+  const { data, error, loading, refresh } = useResource("dashboard");
+  let offset = 0;
+  const segments = data
+    ? Object.entries(data.types).map(([name, count], i) => {
+        const start = offset;
+        offset += data.documents ? (count / data.documents) * 100 : 0;
+        return {
+          name,
+          count,
+          color: colors[i],
+          gradient: `${colors[i]} ${start}% ${offset}%`,
+        };
+      })
+    : [];
   return (
-    <Container fluid>
-      <main>
-        <h1>Welcome to your own reMarkable Cloud!</h1>
-        <h2>About</h2>
-        <p>
-          This software is an unofficial replacement for the proprietary
-          reMarkable Cloud.  In case you want to sync/backup your files
-          and have full control of the hosting environment, this is the
-          software for you.
-        </p>
-        <p>
-          It's is still a work in progress being, actively maintained over
-          on <a href="https://github.com/ddvk/rmfakecloud">GitHub</a>.
-        </p>
-        <h2>Tips</h2>
-        <ul>
-          <li>
-            <p>
-              You can use <a href="https://github.com/ddvk/rmapi">rmapi</a> for managing files,
-              just specify the URL of your instance with the RMAPI_HOST variable like
-              so: <code>RMAPI_HOST=https://rmfakecloud.example.com rmapi</code>
-            </p>
-            <ul>
-              <li>
-                <p>
-                  Do note that the original project is now unmaintained. You should consider
-                  using <a href="https://github.com/ddvk/rmapi">this fork</a> instead.
+    <main className="workspace-page">
+      <PageHeading
+        eyebrow="YOUR PERSONAL CLOUD"
+        title="A little space for big ideas."
+        description="Your documents, connected devices, and the activity between them."
+        loading={loading}
+        refresh={refresh}
+      >
+        <Link className="primary-button" to="/documents">
+          Open library <BsArrowUpRight />
+        </Link>
+      </PageHeading>
+      <ResourceError error={error} />
+      {!data && loading && <p role="status">Loading your cloud…</p>}
+      {data && (
+        <>
+          <div className="metric-grid">
+            <Metric
+              icon={BsFiles}
+              label="Documents"
+              value={data.documents.toLocaleString()}
+              detail="In your active library"
+            />
+            <Metric
+              icon={BsFolder}
+              label="Folders"
+              value={data.folders.toLocaleString()}
+              detail="A place for every thought"
+            />
+            <Metric
+              icon={BsHdd}
+              label="Document size"
+              value={bytes(data.documentBytes)}
+              detail="Reported by document metadata"
+            />
+            <Metric
+              icon={BsTablet}
+              label="Connected clients"
+              value={data.clients}
+              detail="Your open WebSocket connections"
+            />
+          </div>
+          <div className="dashboard-grid">
+            <Activity
+              activity={data.activity}
+              observedSince={data.observedSince}
+            />
+            <section className="panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Your library, at a glance</h2>
+                  <p className="muted">Document formats</p>
+                </div>
+              </div>
+              <div className="donut-wrap">
+                <div
+                  className="donut"
+                  role="img"
+                  aria-label={segments
+                    .map((s) => `${s.name}: ${s.count}`)
+                    .join(", ")}
+                  style={{
+                    background: data.documents
+                      ? `conic-gradient(${segments.map((s) => s.gradient).join(",")})`
+                      : "var(--border)",
+                  }}
+                >
+                  <div>
+                    <strong>{data.documents}</strong>
+                    <span>documents</span>
+                  </div>
+                </div>
+              </div>
+              <ul className="chart-legend">
+                {segments.map((s) => (
+                  <li key={s.name}>
+                    <span>
+                      <i style={{ background: s.color }} />
+                      {s.name}
+                    </span>
+                    <strong>{s.count}</strong>
+                  </li>
+                ))}
+              </ul>
+              {data.documents === 0 && (
+                <p className="muted">
+                  Connect your tablet or upload a document to get started.
                 </p>
-              </li>
-            </ul>
-          </li>
-          <li>
-            <p>
-              Check out the online <a href="https://ddvk.github.io/rmfakecloud/">documentation</a> to
-              learn more about the configuration options. Also read the README
-            </p>
-          </li>
-          <li>
-            <p>
-              You should also read the <a href="https://github.com/ddvk/rmfakecloud/blob/master/README.md">README</a>,
-              to see the current status of the project and notes from the developers.
-            </p>
-          </li>
-          <li>
-            <p>
-              We support the Read on reMarkable Extension. Read more about it in the online documentation.
-            </p>
-          </li>
-          <li>
-            <p>
-              Documents will be uploaded to the selected (highlighted) directory.
-            </p>
-            <ul>
-              <li>
-                <p>
-                  Select directories by clicking on them.
-                </p>
-              </li>
-              <li>
-                <p>
-                  Clicking on selected directories again will open or close them respectively.
-                </p>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </main>
-    </Container>
+              )}
+            </section>
+          </div>
+          <div className="quick-links">
+            <Link to="/connect">
+              <BsTablet />
+              <div>
+                <strong>Make the connection</strong>
+                <span>Pair a tablet or desktop app</span>
+              </div>
+              <BsArrowUpRight />
+            </Link>
+            <Link to="/integrations">
+              <BsFolder />
+              <div>
+                <strong>Bring your storage along</strong>
+                <span>Manage your connected services</span>
+              </div>
+              <BsArrowUpRight />
+            </Link>
+          </div>
+          <p className="chart-note">
+            Last refreshed {new Date(data.checkedAt).toLocaleTimeString()} ·
+            Your account only
+          </p>
+        </>
+      )}
+    </main>
   );
-};
-
-export default Home;
+}
