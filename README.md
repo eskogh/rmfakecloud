@@ -4,6 +4,23 @@ This is a replacement of the cloud, in case you want to sync/backup your files a
 
 See the [project documentation](https://ddvk.github.io/rmfakecloud/) for setup and configuration.
 
+## Run this checkout with Docker Compose
+
+Create a persistent signing secret, build the image, and create an administrator:
+
+```sh
+# First setup only; keep this .env file when updating or restarting.
+(umask 077; set -C; printf 'JWT_SECRET_KEY=%s\n' "$(openssl rand -hex 32)" > .env)
+docker compose build
+docker compose run --rm rmfakecloud setuser -u admin -a -s
+docker compose up -d
+```
+
+Open <http://localhost:3000> and sign in with the generated password printed by
+`setuser`. Documents and configuration are persisted in `./data`.
+See [.env.example](.env.example) for optional settings and the
+[Compose setup guide](docs/install/docker.md) for HTTPS, screen sharing, and updates.
+
 ## Supported Devices
 
 | Device               | Is Supported |

@@ -1,0 +1,27 @@
+services:
+  rmfakecloud:
+    # Build this checkout, including the dashboard and document browser.
+    build:
+      context: .
+      args:
+        VERSION: ${RMFAKECLOUD_VERSION:-local}
+    restart: unless-stopped
+    stop_grace_period: 60s
+    env_file:
+      - .env
+    environment:
+      DATADIR: /data
+      PORT: "3000"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env; see .env.example}
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:${HTTP_PORT:-3000}:3000"
+    volumes:
+      # Includes documents, users, the library database, snapshots, and backups.
+      - ./data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # For direct TLS and legacy MQTT screen sharing, see docs/install/docker.md.
+    # The scratch image has no shell/curl, so no shell-based healthcheck is used.

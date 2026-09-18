@@ -24,3 +24,9 @@ assets_vfsdata.go
 
 # mkdoc build
 site/
+
+# Local Compose configuration and TLS private material
+.env
+.env.*
+!.env.example
+certs/

@@ -1,1 +1,7 @@
 */node_modules
+.git
+.env
+.env.*
+certs
+data
+ui/dist
