@@ -4,6 +4,27 @@ This is a replacement of the cloud, in case you want to sync/backup your files a
 
 See the [project documentation](https://ddvk.github.io/rmfakecloud/) for setup and configuration.
 
+## Web interface
+
+Manage your library from a responsive web interface with light and dark themes.
+The dashboard shows document totals, storage size, connected clients, and recent
+sync notifications. Administrators can inspect instance health and configure
+SMTP, including sending a test email with detailed error feedback.
+
+**Dark mode**
+
+![rmfakecloud dashboard in dark mode, showing document totals, sync activity, and document types](docs/images/dashboard-dark.png)
+
+<details>
+<summary>View the dashboard in light mode</summary>
+
+![rmfakecloud dashboard in light mode](docs/images/dashboard-light.png)
+
+</details>
+
+Screenshots use demonstration data. See the [UI guide](ui/README.md) for document
+browsing, keyboard shortcuts, and details about the dashboard metrics.
+
 ## Run this checkout with Docker Compose
 
 Create a persistent signing secret, build the image, and create an administrator:
