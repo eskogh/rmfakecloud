@@ -108,6 +108,7 @@ func (app *ReactAppWrapper) RegisterRoutes(router *gin.Engine) {
 	admin := auth.Group("")
 	admin.Use(app.adminMiddleware())
 	admin.GET("health", app.health)
+	admin.POST("settings/smtp/test", app.testSMTP)
 	admin.GET("settings/smtp", app.smtpSettings)
 	admin.PUT("settings/smtp", app.saveSMTPSettings)
 	admin.DELETE("settings/smtp", app.resetSMTPSettings)

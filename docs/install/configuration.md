@@ -134,3 +134,13 @@ The override, including its password, is stored in `DATADIR/smtp.json` with mode
 credentials. GET and save responses never contain the password; a blank password
 field keeps the current secret, while the clear checkbox removes it. Changing the
 server or username requires re-entering or explicitly clearing an existing secret.
+
+
+Use **Mail → Test email delivery** to send a fixed test message using the active
+saved settings (or environment configuration). Save pending edits first. Enter a
+recipient and, if no sender override is configured, an allowed test sender.
+Failures show the SMTP stage and server response, including DNS/connectivity,
+TLS, authentication, sender/relay policy, recipient, and message acceptance.
+Tests time out after 30 seconds; credentials are redacted from error messages.
+The container logs also include the failure. Success means server acceptance,
+not guaranteed inbox delivery; check spam or your provider's delivery logs next.

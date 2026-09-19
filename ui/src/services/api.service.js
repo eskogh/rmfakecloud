@@ -113,6 +113,9 @@ class ApiServices {
   saveSMTP(settings) {
     return fetch(`${constants.ROOT_URL}/settings/smtp`, { method: 'PUT', headers: this.header(), body: JSON.stringify(settings) }).then(async r => { await handleError(r); return r.json(); });
   }
+  testSMTP(addresses) {
+    return fetch(`${constants.ROOT_URL}/settings/smtp/test`, { method: "POST", headers: this.header(), body: JSON.stringify(addresses) }).then(async r => { await handleError(r); return r.json(); });
+  }
   resetSMTP() {
     return fetch(`${constants.ROOT_URL}/settings/smtp`, { method: 'DELETE', headers: this.header() }).then(async r => { await handleError(r); return r.json(); });
   }

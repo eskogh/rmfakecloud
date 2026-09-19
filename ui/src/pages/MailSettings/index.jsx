@@ -5,6 +5,12 @@ import api from "../../services/api.service";
 
 export default function MailSettings() {
   const { data, error, loading } = useResource("settings/smtp");
+  const [testing, setTesting] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [recipient, setRecipient] = useState("");
+  const [sender, setSender] = useState("");
+  const [testResult, setTestResult] = useState(null);
+  const [activeFrom, setActiveFrom] = useState("");
   const [form, setForm] = useState(null);
   const [source, setSource] = useState("unconfigured");
   const [busy, setBusy] = useState(false);
@@ -14,11 +20,16 @@ export default function MailSettings() {
   const apply = (value) => {
     setForm({ ...value, password: "", clearPassword: false });
     setSource(value.source);
+    setActiveFrom(value.from);
+    setDirty(false);
+    setTestResult(null);
   };
   useEffect(() => {
     if (data) apply(data);
   }, [data]);
   const change = (key, value) => {
+    setDirty(true);
+    setTestResult(null);
     setForm((v) => ({ ...v, [key]: value }));
     setMessage("");
   };
@@ -76,6 +87,19 @@ export default function MailSettings() {
       setBusy(false);
     }
   };
+  const test = async (event) => {
+    event.preventDefault();
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await api.testSMTP({ to: recipient, from: sender });
+      setTestResult({ ok: true, text: result.message });
+    } catch (e) {
+      setTestResult({ ok: false, text: e.message });
+    } finally {
+      setTesting(false);
+    }
+  };
   return (
     <main className="workspace-page mail-settings">
       <header className="page-heading">
@@ -111,7 +135,7 @@ export default function MailSettings() {
             </div>
           </div>
           <Form onSubmit={save} className="smtp-form">
-            <fieldset disabled={busy}>
+            <fieldset disabled={busy || testing}>
               <div className="smtp-fields">
                 <Form.Group controlId="smtp-server">
                   <Form.Label>SMTP server and port</Form.Label>
@@ -224,6 +248,34 @@ export default function MailSettings() {
             tablet so it can refresh its mail capability. Save does not send a
             test message or verify delivery.
           </p>
+        </section>
+      )}
+      {form && (
+        <section className="panel">
+          <div className="panel-heading"><div>
+            <h2>Test email delivery</h2>
+            <p className="muted">Sends one email using the active saved or environment settings. The test can take up to 30 seconds.</p>
+          </div></div>
+          {dirty && <Alert variant="warning">Save your changes before testing.</Alert>}
+          {testResult && <Alert variant={testResult.ok ? "success" : "danger"} role={testResult.ok ? "status" : "alert"} style={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>{testResult.text}</Alert>}
+          <Form onSubmit={test} className="smtp-form">
+            <fieldset disabled={testing || busy || dirty || source === "unconfigured"}>
+              <div className="smtp-fields">
+                <Form.Group controlId="smtp-test-to">
+                  <Form.Label>Test recipient</Form.Label>
+                  <Form.Control type="email" required value={recipient} onChange={(e) => { setRecipient(e.target.value); setTestResult(null); }} placeholder="you@example.com" />
+                </Form.Group>
+                {!activeFrom && <Form.Group controlId="smtp-test-from">
+                  <Form.Label>Test sender</Form.Label>
+                  <Form.Control type="email" required value={sender} onChange={(e) => { setSender(e.target.value); setTestResult(null); }} placeholder="notes@example.com" />
+                  <Form.Text>Use an address your provider permits. This does not change your saved settings.</Form.Text>
+                </Form.Group>}
+              </div>
+              {activeFrom && <p className="muted">Sender: {activeFrom}</p>}
+              <Button type="submit">{testing ? "Sending test email…" : "Send test email"}</Button>
+            </fieldset>
+          </Form>
+          <p className="chart-note">A successful test means the SMTP server accepted the message. If it does not arrive, check spam and your mail provider’s delivery logs.</p>
         </section>
       )}
       <Modal

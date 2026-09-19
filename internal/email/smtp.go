@@ -1,6 +1,7 @@
 package email
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"errors"
@@ -110,6 +111,20 @@ func utf8encode(s string) string {
 
 // Send sends the email
 func (b *Builder) Send(cfg *SMTPConfig) (err error) {
+	return b.SendContext(context.Background(), cfg)
+}
+
+// SendContext sends with a bounded lifetime and reports the failing SMTP stage.
+func (b *Builder) SendContext(ctx context.Context, cfg *SMTPConfig) (err error) {
+	stage := "configuration"
+	defer func() {
+		if err != nil {
+			if ctx.Err() != nil {
+				err = ctx.Err()
+			}
+			err = fmt.Errorf("SMTP %s: %s", stage, safeSMTPError(err, cfg))
+		}
+	}()
 	if cfg == nil {
 		return errors.New("no smtp config")
 	}
@@ -119,6 +134,7 @@ func (b *Builder) Send(cfg *SMTPConfig) (err error) {
 		return err
 	}
 
+	stage = "connection (check DNS, host, port, and firewall)"
 	var conn net.Conn
 
 	tlsconfig := &tls.Config{
@@ -128,9 +144,10 @@ func (b *Builder) Send(cfg *SMTPConfig) (err error) {
 
 	dialer := &net.Dialer{Timeout: 15 * time.Second}
 	if cfg.NoTLS || cfg.StartTLS {
-		conn, err = dialer.Dial("tcp", cfg.Server)
+		conn, err = dialer.DialContext(ctx, "tcp", cfg.Server)
 	} else {
-		conn, err = tls.DialWithDialer(dialer, "tcp", cfg.Server, tlsconfig)
+		stage = "TLS connection (check port and certificate)"
+		conn, err = (&tls.Dialer{NetDialer: dialer, Config: tlsconfig}).DialContext(ctx, "tcp", cfg.Server)
 	}
 
 	if err != nil {
@@ -138,6 +155,9 @@ func (b *Builder) Send(cfg *SMTPConfig) (err error) {
 	}
 
 	defer conn.Close()
+	stop := context.AfterFunc(ctx, func() { conn.Close() })
+	defer stop()
+	stage = "server greeting"
 	if err = conn.SetDeadline(time.Now().Add(2 * time.Minute)); err != nil {
 		return err
 	}
@@ -146,34 +166,40 @@ func (b *Builder) Send(cfg *SMTPConfig) (err error) {
 		return err
 	}
 
+	stage = "EHLO (check HELO hostname)"
 	if cfg.Helo != "" {
 		if err = c.Hello(cfg.Helo); err != nil {
 			return err
 		}
 	}
 	if cfg.StartTLS {
+		stage = "STARTTLS (check encryption mode and certificate)"
 		if err = c.StartTLS(tlsconfig); err != nil {
 			return err
 		}
 	}
 
 	if cfg.Username != "" {
+		stage = "authentication (check username, password, and provider authentication policy)"
 		auth := smtp.PlainAuth("", cfg.Username, cfg.Password, host)
 		if err = c.Auth(auth); err != nil {
 			return err
 		}
 	}
 
+	stage = "sender (check allowed sender address and relay IP policy)"
 	if err = c.Mail(b.From.Address); err != nil {
 		return err
 	}
 
+	stage = "recipient (check recipient address and relay permissions)"
 	for _, addr := range b.To {
 		if err = c.Rcpt(addr.Address); err != nil {
 			return err
 		}
 	}
 
+	stage = "message transfer"
 	w, err := c.Data()
 	if err != nil {
 		return err
@@ -224,13 +250,15 @@ func (b *Builder) Send(cfg *SMTPConfig) (err error) {
 		return err
 	}
 
+	stage = "message acceptance (check provider policy or quota)"
 	err = w.Close()
 	if err != nil {
 		return err
 	}
 
-	err = c.Quit()
-	return err
+	// DATA acceptance is success even if the server closes before QUIT.
+	_ = c.Quit()
+	return nil
 }
 
 // SplittingWritter writes a stream and inserts a terminator
@@ -272,4 +300,24 @@ func (w *SplittingWritter) Write(p []byte) (n int, err error) {
 	}
 
 	return total, nil
+}
+
+// Avoid disclosing credentials even if an SMTP server echoes authentication data.
+func safeSMTPError(err error, cfg *SMTPConfig) string {
+	detail := err.Error()
+	if cfg != nil && cfg.Password != "" {
+		for _, secret := range []string{base64.StdEncoding.EncodeToString([]byte("\x00" + cfg.Username + "\x00" + cfg.Password)), base64.StdEncoding.EncodeToString([]byte(cfg.Password)), cfg.Password} {
+			detail = strings.ReplaceAll(detail, secret, "[redacted]")
+		}
+	}
+	detail = strings.Map(func(r rune) rune {
+		if r < 32 || r == 127 {
+			return ' '
+		}
+		return r
+	}, detail)
+	if len(detail) > 1000 {
+		detail = detail[:1000]
+	}
+	return detail
 }

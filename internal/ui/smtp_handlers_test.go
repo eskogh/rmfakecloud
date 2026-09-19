@@ -43,3 +43,27 @@ func TestSMTPSettingsAdminAndSecretRedaction(t *testing.T) {
 		}
 	}
 }
+
+func TestSMTPTestAccessAndValidation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	app := &ReactAppWrapper{cfg: &config.Config{}}
+	for _, tc := range []struct {
+		admin  bool
+		body   string
+		status int
+	}{
+		{false, `{"to":"a@example.com"}`, http.StatusForbidden},
+		{true, `{"to":"invalid"}`, http.StatusBadRequest},
+		{true, `{"to":"a@example.com,b@example.com"}`, http.StatusBadRequest},
+		{true, `{"to":"a@example.com"}`, http.StatusBadRequest},
+	} {
+		router := gin.New()
+		router.Use(func(c *gin.Context) { c.Set(AdminRole, tc.admin) })
+		router.POST("/test", app.adminMiddleware(), app.testSMTP)
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, httptest.NewRequest("POST", "/test", strings.NewReader(tc.body)))
+		if response.Code != tc.status {
+			t.Fatalf("got %d: %s", response.Code, response.Body.String())
+		}
+	}
+}
