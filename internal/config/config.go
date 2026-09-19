@@ -97,6 +97,7 @@ type Config struct {
 	JWTRandom         bool
 	Certificate       tls.Certificate
 	SMTPConfig        *email.SMTPConfig
+	SMTPSettings      *email.SettingsStore
 	LogFile           string
 	HWRApplicationKey string
 	HWRHmac           string
@@ -122,7 +123,7 @@ func (cfg *Config) Verify() {
 	}
 
 	if cfg.SMTPConfig == nil {
-		log.Warnln("smtp not configured, no emails will be sent")
+		log.Info("SMTP environment settings are not configured; saved web settings are loaded when the server starts")
 	}
 
 	if cfg.HWRApplicationKey == "" {
@@ -432,4 +433,12 @@ myScript hwr (needs a developer account):
 		envHwrLangOverride,
 		envHwrHost,
 	)
+}
+
+// CurrentSMTP returns one immutable configuration snapshot for a mail request.
+func (cfg *Config) CurrentSMTP() *email.SMTPConfig {
+	if cfg.SMTPSettings != nil {
+		return cfg.SMTPSettings.Current()
+	}
+	return cfg.SMTPConfig
 }

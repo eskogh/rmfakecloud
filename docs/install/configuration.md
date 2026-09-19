@@ -112,3 +112,25 @@ entryPoints:
   mqtt:
     address: ":443"
 ```
+
+### Configure SMTP in the web UI
+
+Administrators can open **Mail** in the navigation and save the SMTP server
+(`hostname:port`), username, password, sender override, HELO hostname, and TLS
+mode. STARTTLS is commonly used on port 587; implicit TLS on port 465. Use no
+encryption only for a trusted local relay.
+
+Saved web settings override the complete `RM_SMTP_*` environment configuration.
+**Use environment settings** removes that override and restores the container's
+environment configuration (or disables email if none is configured). Existing
+environment-only installations continue to work.
+
+Changes apply to new email requests without a container restart. After enabling
+SMTP for the first time, the tablet may need to reconnect or restart to refresh
+its token and mail capability. Saving does not send mail or validate credentials.
+
+The override, including its password, is stored in `DATADIR/smtp.json` with mode
+`0600` and persists with the Compose data mount. Treat data backups as containing
+credentials. GET and save responses never contain the password; a blank password
+field keeps the current secret, while the clear checkbox removes it. Changing the
+server or username requires re-entering or explicitly clearing an existing secret.

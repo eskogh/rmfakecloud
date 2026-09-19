@@ -14,6 +14,7 @@ import (
 	"github.com/ddvk/rmfakecloud/internal/app/passcodestore"
 	"github.com/ddvk/rmfakecloud/internal/common"
 	"github.com/ddvk/rmfakecloud/internal/config"
+	"github.com/ddvk/rmfakecloud/internal/email"
 	"github.com/ddvk/rmfakecloud/internal/hwr"
 	"github.com/ddvk/rmfakecloud/internal/mqtt"
 	"github.com/ddvk/rmfakecloud/internal/screenshare"
@@ -127,6 +128,11 @@ func NewApp(cfg *config.Config) App {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	smtpSettings, smtpErr := email.OpenSettings(cfg.DataDir, cfg.SMTPConfig)
+	if smtpErr != nil {
+		log.Fatal("Unable to load saved SMTP settings: ", smtpErr)
+	}
+	cfg.SMTPSettings = smtpSettings
 	fsStorage := fs.NewStorage(cfg)
 	usrs, err := fsStorage.GetUsers()
 

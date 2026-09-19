@@ -153,7 +153,7 @@ func (app *App) newUserToken(c *gin.Context) {
 		scopes = append(scopes, "hwcmail:-1", "hwc")
 	}
 
-	if app.cfg.SMTPConfig != nil {
+	if app.cfg.CurrentSMTP() != nil {
 		scopes = append(scopes, "mail:-1")
 	}
 
@@ -419,7 +419,8 @@ func (app *App) sendEmail(c *gin.Context) {
 	uid := userID(c)
 	log.Info("Sending mail for: ", uid)
 
-	if app.cfg.SMTPConfig == nil {
+	smtpConfig := app.cfg.CurrentSMTP()
+	if smtpConfig == nil {
 		log.Error("smtp not configured")
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -470,8 +471,8 @@ func (app *App) sendEmail(c *gin.Context) {
 
 	var from *mail.Address
 	var replyTo *mail.Address
-	if app.cfg.SMTPConfig.FromOverride != nil {
-		from = app.cfg.SMTPConfig.FromOverride
+	if smtpConfig.FromOverride != nil {
+		from = smtpConfig.FromOverride
 		replyTo = userEmail
 	} else {
 		from = userEmail
@@ -504,7 +505,7 @@ func (app *App) sendEmail(c *gin.Context) {
 
 		emailClient.AddFile(file.Filename, f, file.Header.Get("Content-Type"))
 	}
-	err = emailClient.Send(app.cfg.SMTPConfig)
+	err = emailClient.Send(smtpConfig)
 	if err != nil {
 		log.Error(handlerLog, err)
 		internalError(c, "cant send email")

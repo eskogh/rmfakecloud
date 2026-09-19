@@ -126,31 +126,33 @@ func (b *Builder) Send(cfg *SMTPConfig) (err error) {
 		ServerName:         host,
 	}
 
-	if cfg.NoTLS {
-		conn, err = net.Dial("tcp", cfg.Server)
+	dialer := &net.Dialer{Timeout: 15 * time.Second}
+	if cfg.NoTLS || cfg.StartTLS {
+		conn, err = dialer.Dial("tcp", cfg.Server)
 	} else {
-		conn, err = tls.Dial("tcp", cfg.Server, tlsconfig)
+		conn, err = tls.DialWithDialer(dialer, "tcp", cfg.Server, tlsconfig)
 	}
 
 	if err != nil {
 		return err
 	}
 
+	defer conn.Close()
+	if err = conn.SetDeadline(time.Now().Add(2 * time.Minute)); err != nil {
+		return err
+	}
 	c, err := smtp.NewClient(conn, host)
 	if err != nil {
 		return err
 	}
 
-	if cfg.StartTLS {
-		err = c.StartTLS(tlsconfig)
-		if err != nil {
+	if cfg.Helo != "" {
+		if err = c.Hello(cfg.Helo); err != nil {
 			return err
 		}
 	}
-
-	if cfg.Helo != "" {
-		err = c.Hello(cfg.Helo)
-		if err != nil {
+	if cfg.StartTLS {
+		if err = c.StartTLS(tlsconfig); err != nil {
 			return err
 		}
 	}

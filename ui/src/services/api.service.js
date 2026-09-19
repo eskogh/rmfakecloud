@@ -110,6 +110,12 @@ class ApiServices {
     return fetch(`${constants.ROOT_URL}/${path}`, { headers: this.header(), signal }).then(async r => { await handleError(r); return r.json(); });
   }
 
+  saveSMTP(settings) {
+    return fetch(`${constants.ROOT_URL}/settings/smtp`, { method: 'PUT', headers: this.header(), body: JSON.stringify(settings) }).then(async r => { await handleError(r); return r.json(); });
+  }
+  resetSMTP() {
+    return fetch(`${constants.ROOT_URL}/settings/smtp`, { method: 'DELETE', headers: this.header() }).then(async r => { await handleError(r); return r.json(); });
+  }
   listDocument() {
     return fetch(`${constants.ROOT_URL}/documents`, {
       method: "GET",

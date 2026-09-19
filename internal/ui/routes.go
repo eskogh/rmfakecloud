@@ -13,7 +13,7 @@ func (app *ReactAppWrapper) RegisterRoutes(router *gin.Engine) {
 	router.StaticFS(app.prefix, app)
 
 	router.GET("/favicon.ico", func(c *gin.Context) {
-		c.FileFromFS("/favicon.ico", app.fs)
+		c.Redirect(http.StatusFound, "/assets/brand/icon.png")
 	})
 	router.GET("/robots.txt", func(c *gin.Context) {
 		c.FileFromFS("/robots.txt", app.fs)
@@ -108,6 +108,9 @@ func (app *ReactAppWrapper) RegisterRoutes(router *gin.Engine) {
 	admin := auth.Group("")
 	admin.Use(app.adminMiddleware())
 	admin.GET("health", app.health)
+	admin.GET("settings/smtp", app.smtpSettings)
+	admin.PUT("settings/smtp", app.saveSMTPSettings)
+	admin.DELETE("settings/smtp", app.resetSMTPSettings)
 	admin.GET("users/:userid", app.getUser)
 	admin.DELETE("users/:userid", app.deleteUser)
 	admin.PUT("users", app.updateUser)
