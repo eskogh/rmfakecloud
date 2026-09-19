@@ -128,6 +128,33 @@ Same as [the previous method](#modify-device-etchosts), but instead of modifying
 **PROS**: a bit easier, you can you even the mobile apps if you manage to install the root ca  
 **CONS**: you can't use the official cloud anymore due to the mangled DNS
 
+## Recover from a computer over USB
+
+From this repository on your Mac or Linux computer, connect the tablet by USB and run:
+
+```sh
+bash scripts/restore-rmfakecloud-after-update.sh --cloud https://your-cloud.example.com
+```
+
+The script uses the standard USB SSH address `10.11.99.1` and asks for the tablet's
+root password. It detects the model, downloads the current upstream installer on
+the computer, and copies it to `/home/root/installer-rm12.sh` (or
+`installer-rmpro.sh`). It runs `install URL`, retries the prompted `install` if
+needed, and explicitly runs `setcloud URL`. It then checks the service, local
+hostname interception, certificates, and the cloud connection.
+
+A failed initial cloud check is a warning and does not block reinstallation.
+The installer restores the local proxy and certificate trust after a firmware
+update even when the tablet cannot currently reach the cloud. The tablet still
+needs Wi-Fi or another working network connection to sync: USB SSH does not
+provide internet access automatically. A `wget: bad address` error means hostname
+resolution failed; it is separate from certificate trust. If the final connection
+check fails, the script exits with an error and distinguishes restored proxy
+configuration from remaining DNS, Wi-Fi, or upstream TLS/HTTP problems.
+
+This is a computer-side recovery script, not a web UI operation. It does not change
+your router DNS or replace the tablet's DNS configuration.
+
 ## Reenabling after a system update
 
 After a system update, you'll need to go through the steps to setup your device again, as any changes you made to it's configuration will have been lost.
