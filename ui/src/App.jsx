@@ -10,6 +10,7 @@ import Navigationbar from "./components/Navigation";
 import PasscodeResets from "./components/PasscodeResets";
 
 import Login from "./pages/Login";
+import MailSettings from "./pages/MailSettings";
 import Health from "./pages/Health";
 import Home from "./pages/Home";
 import Connect from "./pages/Connect";
@@ -53,6 +54,7 @@ export default function App() {
                 <PrivateRoute path="/integrations" component={Integrations} />
                 <PrivateRoute path="/profile" component={Profile} />
                 <PrivateRoute path="/screenshare" component={ScreenShare} />
+                <PrivateRoute path="/settings/mail" roles={[Role.Admin]} component={MailSettings} />
                 <PrivateRoute path="/health" roles={[Role.Admin]} component={Health} />
                 <PrivateRoute path="/admin" roles={[Role.Admin]} component={Admin} />
 

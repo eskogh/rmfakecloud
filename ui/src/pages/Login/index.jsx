@@ -29,10 +29,38 @@ const Login = () => {
 
   return (
     <div className={styles.container}>
+      <section
+        className={styles.identity}
+        aria-label="rmfakecloud — Your notes. Your cloud. Yours."
+      >
+        <img
+          className="brand-logo-dark"
+          src="/assets/brand/logo-dark.png"
+          alt="rmfakecloud — Your notes. Your cloud. Yours."
+          width="1672"
+          height="941"
+        />
+        <img
+          className="brand-logo-light"
+          src="/assets/brand/logo-light.png"
+          alt="rmfakecloud — Your notes. Your cloud. Yours."
+          width="1672"
+          height="941"
+        />
+      </section>
       <div className={styles.formContainer}>
-        {errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
+        <p className="eyebrow">YOUR PERSONAL CLOUD</p>
+        <h1>Welcome home.</h1>
+        <p className={styles.intro}>
+          Sign in to your notes, notebooks, and next big ideas.
+        </p>
+        {errorMessage ? (
+          <p role="alert" className={styles.error}>
+            {errorMessage}
+          </p>
+        ) : null}
 
-        <Form>
+        <Form onSubmit={handleLogin}>
           <Form.Group className="mb-3">
             <Form.Label htmlFor="username">Username</Form.Label>
             <Form.Control
@@ -41,9 +69,9 @@ const Login = () => {
               autoFocus
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
-              placeholder="Username" 
+              placeholder="Username"
               autoComplete="username"
-              />
+            />
           </Form.Group>
 
           <Form.Group className="mb-3">
@@ -54,16 +82,15 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              placeholder="Password" 
+              placeholder="Password"
               autoComplete="current-password"
-              />
+            />
           </Form.Group>
 
-          <Button type="submit" onClick={handleLogin} disabled={loading}>
-            Login
+          <Button type="submit" disabled={loading}>
+            {loading ? "Signing in…" : "Sign in"}
           </Button>
         </Form>
-
       </div>
     </div>
   );

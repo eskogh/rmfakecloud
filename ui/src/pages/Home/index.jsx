@@ -14,7 +14,7 @@ import {
   ResourceError,
   bytes,
 } from "../../components/DashboardParts";
-const colors = ["#5b8def", "#39bda0", "#af8aeb", "#edb45e"];
+const colors = ["#a47cda", "#829abb", "#69638f", "#baa8c9"];
 export default function Home() {
   const { data, error, loading, refresh } = useResource("dashboard");
   let offset = 0;

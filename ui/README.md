@@ -59,3 +59,16 @@ responsive web app, not yet an offline app or native mobile package.
 
 Pages refresh on opening and with the Refresh action. Errors retain any previous
 snapshot with a stale-data warning; no synthetic chart data is generated.
+
+## Branding
+
+Original brand artwork lives in `public/assets/brand/`: `logo-dark.png`,
+`logo-light.png`, and `icon.png`. The login page selects the appropriate logo
+for the active theme; the compact header uses the icon and a two-color wordmark.
+The icon is also linked as the PNG favicon and Apple touch icon. The Go server
+redirects legacy `/favicon.ico` requests to the same asset.
+
+Brand colors are shared through `--brand-violet`, `--brand-blue`, `--accent`, and
+surface tokens in `src/modern.scss`. Both themes retain separate text and
+background colors for readability. The browser's theme color follows the selected
+theme. Dashboard chart colors use the violet, slate-blue, and lavender palette.

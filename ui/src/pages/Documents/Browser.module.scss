@@ -35,11 +35,11 @@
   button[data-drop-target] {
     outline: 2px dashed var(--accent);
     outline-offset: -3px;
-    background: #e9b88718;
+    background: var(--accent-soft);
   }
   [data-drop-target]:hover {
     outline: 2px dashed var(--accent);
-    background: #e9b88724;
+    background: var(--accent-soft);
   }
 }
 .sidebar {
@@ -70,7 +70,7 @@
     color: var(--ink);
   }
   nav .activeNav {
-    background: #e9b88715;
+    background: var(--accent-soft);
     color: var(--accent);
   }
   nav small {
@@ -542,7 +542,7 @@
   white-space: nowrap;
 }
 .selectedRow {
-  background: #e9b88712 !important;
+  background: var(--accent-soft) !important;
 }
 .empty {
   display: flex;

@@ -1,7 +1,6 @@
 import { Nav, Navbar, NavDropdown, Container } from "react-bootstrap";
 import { NavLink } from "react-router-dom";
 import {
-  BsCloud,
   BsGrid,
   BsFiles,
   BsPlug,
@@ -9,6 +8,7 @@ import {
   BsDisplay,
   BsActivity,
   BsPeople,
+  BsEnvelope,
 } from "react-icons/bs";
 import { logout } from "../common/actions";
 import { useAuthState } from "../common/useAuthContext";
@@ -30,6 +30,7 @@ export default function NavigationBar() {
   if (user?.Roles?.includes("Admin"))
     links.push(
       ["/health", "Health", BsActivity],
+      ["/settings/mail", "Mail", BsEnvelope],
       ["/admin", "Users", BsPeople],
     );
   return (
@@ -37,9 +38,11 @@ export default function NavigationBar() {
       <Container fluid>
         <Navbar.Brand as={NavLink} to="/" className="wordmark">
           <span className="brand-icon">
-            <BsCloud />
+            <img src="/assets/brand/icon.png" alt="" width="36" height="36" />
           </span>
-          rmfakecloud<span className="brand-tag">YOUR CLOUD</span>
+          <span className="brand-name">
+            rmfake<span>cloud</span>
+          </span>
         </Navbar.Brand>
         <div className="nav-controls">
           <label className="theme-control">

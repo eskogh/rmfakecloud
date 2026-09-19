@@ -12,6 +12,14 @@ export default function useTheme() {
     const apply = () => {
       document.documentElement.dataset.bsTheme =
         theme === "system" ? (media.matches ? "dark" : "light") : theme;
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute(
+          "content",
+          document.documentElement.dataset.bsTheme === "dark"
+            ? "#0d0f14"
+            : "#f5f3f9",
+        );
     };
     apply();
     media.addEventListener("change", apply);
