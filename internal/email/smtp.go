@@ -129,6 +129,11 @@ func (b *Builder) SendContext(ctx context.Context, cfg *SMTPConfig) (err error) 
 		return errors.New("no smtp config")
 	}
 
+	helo := ResolveHelo(cfg.Helo, "", "", nil, false)
+	if helo == "" || strings.ContainsAny(helo, "\r\n") {
+		return errors.New("configure an SMTP HELO hostname; no valid hostname is available")
+	}
+
 	host, _, err := net.SplitHostPort(cfg.Server)
 	if err != nil {
 		return err
@@ -167,10 +172,8 @@ func (b *Builder) SendContext(ctx context.Context, cfg *SMTPConfig) (err error) 
 	}
 
 	stage = "EHLO (check HELO hostname)"
-	if cfg.Helo != "" {
-		if err = c.Hello(cfg.Helo); err != nil {
-			return err
-		}
+	if err = c.Hello(helo); err != nil {
+		return err
 	}
 	if cfg.StartTLS {
 		stage = "STARTTLS (check encryption mode and certificate)"

@@ -144,3 +144,12 @@ TLS, authentication, sender/relay policy, recipient, and message acceptance.
 Tests time out after 30 seconds; credentials are redacted from error messages.
 The container logs also include the failure. Success means server acceptance,
 not guaranteed inbox delivery; check spam or your provider's delivery logs next.
+
+When SMTP HELO is left empty, rmfakecloud chooses a hostname before opening the
+SMTP connection: the public `STORAGE_URL` / cloud hostname, then
+`X-Forwarded-Host` or `Forwarded` only when proxy headers are trusted, then the
+HTTP request host, and finally a valid operating-system hostname. Ports are
+removed from inferred hostnames. An explicit HELO always takes precedence.
+If no valid hostname is available, configure HELO explicitly; the send fails
+before connecting. SMTP delivery is not retried with a different HELO after a
+failure.

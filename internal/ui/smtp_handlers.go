@@ -78,7 +78,7 @@ func (app *ReactAppWrapper) testSMTP(c *gin.Context) {
 		badReq(c, "Enter a single valid recipient without line breaks")
 		return
 	}
-	cfg := app.cfg.CurrentSMTP()
+	cfg := app.cfg.SMTPForRequest(c.Request)
 	if cfg == nil {
 		badReq(c, "Configure and save SMTP settings first")
 		return

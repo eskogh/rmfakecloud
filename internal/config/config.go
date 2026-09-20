@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/mail"
 	"net/url"
 	"os"
@@ -441,4 +442,15 @@ func (cfg *Config) CurrentSMTP() *email.SMTPConfig {
 		return cfg.SMTPSettings.Current()
 	}
 	return cfg.SMTPConfig
+}
+
+// SMTPForRequest resolves HELO on a copy, leaving saved settings unchanged.
+func (cfg *Config) SMTPForRequest(request *http.Request) *email.SMTPConfig {
+	current := cfg.CurrentSMTP()
+	if current == nil {
+		return nil
+	}
+	resolved := *current
+	resolved.Helo = email.ResolveHelo(current.Helo, cfg.StorageURL, cfg.CloudHost, request, cfg.TrustProxy)
+	return &resolved
 }

@@ -419,7 +419,7 @@ func (app *App) sendEmail(c *gin.Context) {
 	uid := userID(c)
 	log.Info("Sending mail for: ", uid)
 
-	smtpConfig := app.cfg.CurrentSMTP()
+	smtpConfig := app.cfg.SMTPForRequest(c.Request)
 	if smtpConfig == nil {
 		log.Error("smtp not configured")
 		c.AbortWithStatus(http.StatusInternalServerError)
