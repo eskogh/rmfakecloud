@@ -85,6 +85,10 @@ func (b *Bus) Publish(ctx context.Context, event Event) {
 	for s := range b.subscribers {
 		// Detach pointer fields so subscribers cannot alter each other's payloads.
 		copy := event
+		if event.Data.Commit != nil {
+			c := *event.Data.Commit
+			copy.Data.Commit = &c
+		}
 		if event.Data.Document != nil {
 			d := *event.Data.Document
 			copy.Data.Document = &d

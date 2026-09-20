@@ -1,11 +1,13 @@
 package config
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/ddvk/rmfakecloud/internal/automation"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -86,6 +88,7 @@ const (
 
 // Config config
 type Config struct {
+	Events     *automation.Bus
 	Version    string
 	Port       string
 	StorageURL string
@@ -453,4 +456,11 @@ func (cfg *Config) SMTPForRequest(request *http.Request) *email.SMTPConfig {
 	resolved := *current
 	resolved.Helo = email.ResolveHelo(current.Helo, cfg.StorageURL, cfg.CloudHost, request, cfg.TrustProxy)
 	return &resolved
+}
+
+// PublishEvent is deliberately a no-op unless automation has been initialized.
+func (cfg *Config) PublishEvent(event automation.Event) {
+	if cfg != nil && cfg.Events != nil {
+		cfg.Events.Publish(context.Background(), event)
+	}
 }

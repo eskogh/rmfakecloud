@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/ddvk/rmfakecloud/internal/app/hub"
+	"github.com/ddvk/rmfakecloud/internal/automation"
 	"github.com/ddvk/rmfakecloud/internal/common"
 	"github.com/ddvk/rmfakecloud/internal/config"
 	"github.com/ddvk/rmfakecloud/internal/email"
@@ -648,6 +649,7 @@ func (app *App) locateService(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 func (app *App) syncComplete(c *gin.Context) {
+	defer app.publishSyncResult(c)
 	log.Info("Sync complete")
 	uid := userID(c)
 	deviceID := c.GetString(deviceIDKey)
@@ -658,6 +660,7 @@ func (app *App) syncComplete(c *gin.Context) {
 }
 
 func (app *App) syncCompleteV2(c *gin.Context) {
+	defer app.publishSyncResult(c)
 	log.Info("Sync completeV2")
 	uid := userID(c)
 	deviceID := c.GetString(deviceIDKey)
@@ -742,6 +745,7 @@ func (app *App) blobStorageUpload(c *gin.Context) {
 }
 
 func (app *App) syncUpdateRootV3(c *gin.Context) {
+	defer app.publishSyncResult(c)
 	var rootv3 messages.SyncRootV3Request
 	err := c.BindJSON(&rootv3)
 	if err != nil {
@@ -1369,4 +1373,14 @@ func stripAds(msg string) string {
 		return msg[:i]
 	}
 	return msg
+}
+
+func (app *App) publishSyncResult(c *gin.Context) {
+	name := "sync.completed"
+	if c.Writer.Status() >= 400 {
+		name = "sync.failed"
+	}
+	event := automation.NewEvent(name, userID(c))
+	event.Data.Source = c.FullPath()
+	app.cfg.PublishEvent(event)
 }

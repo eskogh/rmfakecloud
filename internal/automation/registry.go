@@ -2,6 +2,7 @@ package automation
 
 import (
 	"context"
+	"strings"
 	"sync"
 )
 
@@ -11,6 +12,9 @@ type routed struct {
 }
 
 func (r routed) HandleEvent(ctx context.Context, e Event) error {
+	if strings.HasPrefix(e.Event, "internal.") {
+		return nil
+	}
 	if !r.Enabled() || e.Data.User.ID != r.config.UserID {
 		return nil
 	}

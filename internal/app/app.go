@@ -12,6 +12,7 @@ import (
 
 	"github.com/ddvk/rmfakecloud/internal/app/hub"
 	"github.com/ddvk/rmfakecloud/internal/app/passcodestore"
+	"github.com/ddvk/rmfakecloud/internal/automation"
 	"github.com/ddvk/rmfakecloud/internal/common"
 	"github.com/ddvk/rmfakecloud/internal/config"
 	"github.com/ddvk/rmfakecloud/internal/email"
@@ -105,6 +106,9 @@ func (app *App) Start() {
 
 // Stop the app
 func (app *App) Stop() {
+	if app.cfg.Events != nil {
+		defer app.cfg.Events.Close()
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	// app.hub.Stop()
@@ -133,7 +137,9 @@ func NewApp(cfg *config.Config) App {
 		log.Fatal("Unable to load saved SMTP settings: ", smtpErr)
 	}
 	cfg.SMTPSettings = smtpSettings
+	cfg.Events = automation.NewBus(64, 4*time.Minute)
 	fsStorage := fs.NewStorage(cfg)
+	cfg.Events.Subscribe(fsStorage)
 	usrs, err := fsStorage.GetUsers()
 
 	if err != nil {

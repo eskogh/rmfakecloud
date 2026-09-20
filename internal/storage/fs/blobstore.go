@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/danjacques/gofslock/fslock"
+	"github.com/ddvk/rmfakecloud/internal/automation"
 	"github.com/ddvk/rmfakecloud/internal/common"
 	"github.com/ddvk/rmfakecloud/internal/config"
 	"github.com/ddvk/rmfakecloud/internal/storage"
@@ -686,6 +687,14 @@ func (fs *FileSystemStorage) LoadBlob(uid, blobid string) (reader io.ReadCloser,
 // StoreBlob stores a document
 func (fs *FileSystemStorage) StoreBlob(uid, id string, stream io.Reader, lastGen int64) (generation int64, err error) {
 	generation = 1
+	var before, after string
+	defer func() {
+		if id == rootBlob && err == nil && before != after && fs.Cfg.Events != nil {
+			event := automation.NewEvent("internal.root_committed", uid)
+			event.Data.Commit = &automation.Commit{Before: before, After: after}
+			fs.Cfg.PublishEvent(event)
+		}
+	}()
 
 	reader := stream
 	if id == rootBlob {
@@ -707,6 +716,10 @@ func (fs *FileSystemStorage) StoreBlob(uid, id string, stream io.Reader, lastGen
 		blobPath := path.Join(fs.getUserBlobPath(uid), common.Sanitize(id))
 		_, blobErr := os.Stat(blobPath)
 		rootExists := blobErr == nil
+		if fs.Cfg.Events != nil {
+			previous, _ := os.ReadFile(blobPath)
+			before = strings.TrimSpace(string(previous))
+		}
 
 		if currentGen != lastGen && currentGen > 0 && rootExists {
 			log.Warnf("wrong generation, currentGen %d, lastGen %d", currentGen, lastGen)
@@ -730,6 +743,7 @@ func (fs *FileSystemStorage) StoreBlob(uid, id string, stream io.Reader, lastGen
 		}
 		hist.WriteString("\n")
 
+		after = strings.TrimSpace(buf.String())
 		reader = io.NopCloser(&buf)
 		size, err1 := hist.Seek(0, io.SeekCurrent)
 		if err1 != nil {

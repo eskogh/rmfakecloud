@@ -24,3 +24,13 @@ Filters use typed fields and `equals`, `not_equals`, `contains`, `starts_with`, 
 `exists`. All filters must match. Subscriptions accept exact event names, a
 prefix such as `document.*`, or `*`. User ownership is checked before delivery.
 There is no workflow expression language or mandatory external queue.
+
+## Event sources
+
+Legacy sync emits document events after metadata writes and completed deletes.
+Sync 1.5 emits events from differences between immutable root trees after a
+successful root write (including web library edits). Comparing trees happens on
+a background worker. Failed writes and standalone blob uploads emit no document
+events. `sync.completed` / `sync.failed` describe the result of sync completion or
+v3 root-update requests; they do not claim to detect offline tablet failures.
+No document content or unauthenticated download URLs are included by default.

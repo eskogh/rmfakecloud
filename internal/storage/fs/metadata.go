@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ddvk/rmfakecloud/internal/automation"
 	"github.com/ddvk/rmfakecloud/internal/messages"
 	"github.com/ddvk/rmfakecloud/internal/storage"
 	log "github.com/sirupsen/logrus"
@@ -64,10 +65,21 @@ func (fs *FileSystemStorage) GetMetadata(uid, id string) (*messages.RawMetadata,
 func (fs *FileSystemStorage) UpdateMetadata(uid string, r *messages.RawMetadata) error {
 	filepath := fs.getPathFromUser(uid, r.ID+storage.MetadataFileExt)
 
+	_, previousErr := os.Stat(filepath)
 	js, err := json.Marshal(r)
 	if err != nil {
 		return err
 	}
 	err = os.WriteFile(filepath, js, 0600)
+	if err == nil {
+		name := "document.updated"
+		if os.IsNotExist(previousErr) {
+			name = "document.created"
+		}
+		event := automation.NewEvent(name, uid)
+		event.Data.Document = &automation.Document{ID: r.ID, Name: r.VissibleName, Type: string(r.Type)}
+		event.Data.Source = "sync10"
+		fs.Cfg.PublishEvent(event)
+	}
 	return err
 }

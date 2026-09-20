@@ -13,6 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/ddvk/rmfakecloud/internal/automation"
 	"github.com/ddvk/rmfakecloud/internal/common"
 	"github.com/ddvk/rmfakecloud/internal/config"
 	"github.com/ddvk/rmfakecloud/internal/storage"
@@ -125,6 +126,7 @@ func (fs *FileSystemStorage) GetDocument(uid, id string) (io.ReadCloser, error) 
 
 // RemoveDocument removes document (moves it to trash)
 func (fs *FileSystemStorage) RemoveDocument(uid, id string) error {
+	metadata, _ := fs.GetMetadata(uid, id)
 
 	trashDir := fs.getPathFromUser(uid, DefaultTrashDir)
 	err := os.MkdirAll(trashDir, 0700)
@@ -146,6 +148,14 @@ func (fs *FileSystemStorage) RemoveDocument(uid, id string) error {
 	if err != nil {
 		return err
 	}
+	event := automation.NewEvent("document.deleted", uid)
+	event.Data.Document = &automation.Document{ID: id}
+	if metadata != nil {
+		event.Data.Document.Name = metadata.VissibleName
+		event.Data.Document.Type = string(metadata.Type)
+	}
+	event.Data.Source = "sync10"
+	fs.Cfg.PublishEvent(event)
 	return nil
 }
 

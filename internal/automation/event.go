@@ -28,7 +28,13 @@ type Content struct {
 	PNGURL string `json:"png_url,omitempty"`
 	PDFURL string `json:"pdf_url,omitempty"`
 }
+type Commit struct {
+	Before string
+	After  string
+}
+
 type Data struct {
+	Commit   *Commit   `json:"-"`
 	User     User      `json:"user"`
 	Document *Document `json:"document,omitempty"`
 	Page     *Page     `json:"page,omitempty"`
