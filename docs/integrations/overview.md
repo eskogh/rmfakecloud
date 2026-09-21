@@ -34,3 +34,20 @@ a background worker. Failed writes and standalone blob uploads emit no document
 events. `sync.completed` / `sync.failed` describe the result of sync completion or
 v3 root-update requests; they do not claim to detect offline tablet failures.
 No document content or unauthenticated download URLs are included by default.
+
+## Administration and adapters
+
+Administrators configure destinations and routing rules in the Integrations
+page. Settings and the last 100 deliveries per destination persist under
+`DATADIR/automation`. Generic webhooks, Telegram, and Discord share delivery
+accounting, conservative retries and network policy. Manual sends use a separate
+admin endpoint and the `Action` / `Attachment` abstraction.
+
+See [webhooks and API](webhooks.md), [security](security.md),
+[optional n8n](n8n.md), and [developer guidance](development.md).
+
+Implemented event producers remain document creation/update/deletion and sync
+completion/failure. `integration.test` is explicit and marked; manual sends
+record `document.send_requested`. Page, device, user and automatic export events
+are extension points, not claimed as implemented producers. No full document
+content is automatically exported to a destination.

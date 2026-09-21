@@ -55,6 +55,10 @@ export default function IntegrationModal(params) {
         accesstoken: integrationForm.accesstoken,
         path: integrationForm.path,
         endpoint: integrationForm.endpoint,
+        timeout: integration.Timeout,
+        headers: integration.Headers,
+        hmacsecret: integration.HMACSecret,
+        hmacheader: integration.HMACHeader,
       });
       onSave();
     } catch (e) {

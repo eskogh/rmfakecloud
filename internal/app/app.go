@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -106,6 +107,9 @@ func (app *App) Start() {
 
 // Stop the app
 func (app *App) Stop() {
+	if app.cfg.Automation != nil {
+		defer app.cfg.Automation.Close()
+	}
 	if app.cfg.Events != nil {
 		defer app.cfg.Events.Close()
 	}
@@ -138,6 +142,15 @@ func NewApp(cfg *config.Config) App {
 	}
 	cfg.SMTPSettings = smtpSettings
 	cfg.Events = automation.NewBus(64, 4*time.Minute)
+	automationManager, automationErr := automation.OpenManager(cfg.DataDir, cfg.Events, automation.Policy{
+		AllowHTTP:            os.Getenv("RM_AUTOMATION_ALLOW_HTTP") == "true",
+		AllowPrivateNetworks: os.Getenv("RM_AUTOMATION_ALLOW_PRIVATE_NETWORKS") == "true",
+	})
+	if automationErr != nil {
+		log.Warn("Automation disabled: could not load settings")
+	} else {
+		cfg.Automation = automationManager
+	}
 	fsStorage := fs.NewStorage(cfg)
 	cfg.Events.Subscribe(fsStorage)
 	usrs, err := fsStorage.GetUsers()

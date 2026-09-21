@@ -89,6 +89,7 @@ const (
 // Config config
 type Config struct {
 	Events     *automation.Bus
+	Automation *automation.Manager
 	Version    string
 	Port       string
 	StorageURL string

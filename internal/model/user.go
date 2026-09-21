@@ -82,7 +82,11 @@ type IntegrationConfig struct {
 	Path string `yaml:"path,omitempty"`
 
 	// Webhook
-	Endpoint string `yaml:"endpoint,omitempty"`
+	Endpoint   string            `yaml:"endpoint,omitempty"`
+	Timeout    time.Duration     `yaml:"timeout,omitempty"`
+	Headers    map[string]string `yaml:"headers,omitempty"`
+	HMACSecret string            `yaml:"hmacsecret,omitempty"`
+	HMACHeader string            `yaml:"hmacheader,omitempty"`
 }
 
 // GenPassword generates a new random password

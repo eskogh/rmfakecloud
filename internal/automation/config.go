@@ -54,11 +54,21 @@ func (c Config) Validate(policy Policy) error {
 	if c.ID == "" || c.Name == "" || c.UserID == "" {
 		return errors.New("id, name and user_id are required")
 	}
-	if c.Type != "webhook" {
+	if c.Type != "webhook" && c.Type != "telegram" && c.Type != "discord" {
 		return errors.New("unsupported integration type")
 	}
-	if err := policy.ValidateURL(c.Endpoint); err != nil {
+	if c.Type == "telegram" {
+		if c.Auth.Token == "" || c.ChatID == "" {
+			return errors.New("bot token and chat_id are required")
+		}
+		if c.Endpoint != "" {
+			return errors.New("Telegram uses the official Bot API; endpoint must be empty")
+		}
+	} else if err := policy.ValidateURL(c.Endpoint); err != nil {
 		return err
+	}
+	if c.Type != "webhook" && (c.Signing.Enabled || len(c.Headers) > 0 || c.Auth.Type != "") {
+		return errors.New("custom headers, bearer authentication and signing are only supported for webhooks")
 	}
 	if c.Method != "" && c.Method != "POST" {
 		return errors.New("only POST is supported")

@@ -25,3 +25,29 @@ services:
         max-file: "3"
     # For direct TLS and legacy MQTT screen sharing, see docs/install/docker.md.
     # The scratch image has no shell/curl, so no shell-based healthcheck is used.
+
+  n8n:
+    image: ${N8N_IMAGE:-docker.n8n.io/n8nio/n8n:2}
+    profiles: [automation]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+    environment:
+      GENERIC_TIMEZONE: ${TZ:-Europe/Stockholm}
+      TZ: ${TZ:-Europe/Stockholm}
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      # Local editor only. Set true when placing n8n behind an HTTPS proxy.
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-false}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  n8n_data:

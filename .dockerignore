@@ -5,3 +5,16 @@
 certs
 data
 ui/dist
+
+.github
+docs
+helm
+test
+
+README.md
+mkdocs.yml
+
+dev.sh
+dockerbuild.sh
+Dockerfile.make
+docker-compose.yml

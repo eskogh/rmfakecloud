@@ -9,13 +9,25 @@ import (
 type routed struct {
 	Integration
 	config Config
+	rules  func(Event) bool
 }
 
 func (r routed) HandleEvent(ctx context.Context, e Event) error {
 	if strings.HasPrefix(e.Event, "internal.") {
 		return nil
 	}
-	if !r.Enabled() || e.Data.User.ID != r.config.UserID {
+	if e.Data.User.ID != r.config.UserID {
+		return nil
+	}
+	if e.TargetID != "" {
+		if e.TargetID != r.ID() {
+			return nil
+		}
+		if e.Event == "integration.test" && e.Data.Test {
+			return r.Integration.HandleEvent(ctx, e)
+		}
+	}
+	if !r.Enabled() {
 		return nil
 	}
 	matched := false
@@ -25,7 +37,7 @@ func (r routed) HandleEvent(ctx context.Context, e Event) error {
 			break
 		}
 	}
-	if !matched {
+	if !matched && (r.rules == nil || !r.rules(e)) {
 		return nil
 	}
 	for _, filter := range r.config.Filters {
@@ -42,14 +54,15 @@ type Registry struct {
 	stops map[string]func()
 }
 
-func NewRegistry(bus EventBus) *Registry { return &Registry{bus: bus, stops: make(map[string]func())} }
-func (r *Registry) Register(i Integration, c Config) {
+func NewRegistry(bus EventBus) *Registry             { return &Registry{bus: bus, stops: make(map[string]func())} }
+func (r *Registry) Register(i Integration, c Config) { r.register(i, c, nil) }
+func (r *Registry) register(i Integration, c Config, rules func(Event) bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if stop := r.stops[i.ID()]; stop != nil {
 		stop()
 	}
-	unsubscribe := r.bus.Subscribe(routed{Integration: i, config: c})
+	unsubscribe := r.bus.Subscribe(routed{Integration: i, config: c, rules: rules})
 	r.stops[i.ID()] = func() {
 		unsubscribe()
 		if closer, ok := i.(interface{ Close() }); ok {

@@ -64,6 +64,10 @@ func (w *Webhook) HandleEvent(ctx context.Context, e Event) (err error) {
 	if err != nil {
 		return errors.New("event encoding failed")
 	}
+	return w.deliver(ctx, e, func(id string) (int, bool, error) { return w.attempt(ctx, e, id, body) })
+}
+
+func (w *Webhook) deliver(ctx context.Context, e Event, attemptRequest func(string) (int, bool, error)) (err error) {
 	delivery := Delivery{ID: uuid.NewString(), IntegrationID: w.ID(), Event: e.Event, Timestamp: time.Now().UTC()}
 	start := time.Now()
 	defer func() {
@@ -93,7 +97,7 @@ func (w *Webhook) HandleEvent(ctx context.Context, e Event) (err error) {
 			}
 		}
 		delivery.Attempts++
-		status, retry, attemptErr := w.attempt(ctx, e, delivery.ID, body)
+		status, retry, attemptErr := attemptRequest(delivery.ID)
 		delivery.HTTPStatus = status
 		if attemptErr == nil {
 			return nil

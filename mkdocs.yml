@@ -35,6 +35,12 @@ nav:
   - Usage:
       - User Profile: usage/userprofile.md
       - Integrations: usage/integrations.md
+      - Automation:
+          - Overview: integrations/overview.md
+          - Webhooks and API: integrations/webhooks.md
+          - n8n: integrations/n8n.md
+          - Security: integrations/security.md
+          - Development: integrations/development.md
       - Diff Sync: usage/diff-sync.md
       - Passcode Reset: usage/passcode-reset.md
   - Browser Extension: browser-extension.md

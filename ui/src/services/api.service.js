@@ -2,6 +2,15 @@ import constants from "../common/constants.js";
 import { jwtDecode } from "jwt-decode";
 
 class ApiServices {
+  async automation(path = "", method = "GET", body) {
+    const response = await fetch(`${constants.ROOT_URL}/automation${path}`, {
+      method, headers: this.header(),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    await handleError(response);
+    return response.status === 204 ? null : response.json();
+  }
+
   header() {
     return {
       "Content-Type": "application/json",

@@ -286,9 +286,11 @@ func (app *ReactAppWrapper) getDocument(c *gin.Context) {
 	}
 
 	contentType := "application/pdf"
- if exportType == "rmdoc" { contentType = "application/zip" }
- c.Header("Cache-Control", "private, no-store")
- c.DataFromReader(http.StatusOK, -1, contentType, reader, nil)
+	if exportType == "rmdoc" {
+		contentType = "application/zip"
+	}
+	c.Header("Cache-Control", "private, no-store")
+	c.DataFromReader(http.StatusOK, -1, contentType, reader, nil)
 }
 
 func (app *ReactAppWrapper) getDocumentMetadata(c *gin.Context) {
@@ -560,7 +562,11 @@ func (app *ReactAppWrapper) listIntegrations(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user.Integrations)
+	views := make([]legacyIntegrationView, 0, len(user.Integrations))
+	for _, integration := range user.Integrations {
+		views = append(views, maskLegacyIntegration(integration))
+	}
+	c.JSON(http.StatusOK, views)
 }
 
 func warnLocalfsEdition(c *gin.Context, int *model.IntegrationConfig) {
@@ -608,7 +614,7 @@ func (app *ReactAppWrapper) createIntegration(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, int)
+	c.JSON(http.StatusOK, maskLegacyIntegration(int))
 }
 
 func (app *ReactAppWrapper) getIntegration(c *gin.Context) {
@@ -625,7 +631,7 @@ func (app *ReactAppWrapper) getIntegration(c *gin.Context) {
 
 	for _, integration := range user.Integrations {
 		if integration.ID == intid {
-			c.JSON(http.StatusOK, integration)
+			c.JSON(http.StatusOK, maskLegacyIntegration(integration))
 			return
 		}
 	}
@@ -660,6 +666,7 @@ func (app *ReactAppWrapper) updateIntegration(c *gin.Context) {
 	for idx, integration := range user.Integrations {
 		if integration.ID == intid {
 			int.ID = integration.ID
+			preserveLegacyWebhookSecrets(&int, integration)
 			user.Integrations[idx] = int
 
 			err = app.userStorer.UpdateUser(user)
@@ -670,7 +677,7 @@ func (app *ReactAppWrapper) updateIntegration(c *gin.Context) {
 				return
 			}
 
-			c.JSON(http.StatusOK, int)
+			c.JSON(http.StatusOK, maskLegacyIntegration(int))
 			return
 		}
 	}

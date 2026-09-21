@@ -1,3 +1,4 @@
+import AutomationPanel from "./AutomationPanel";
 import React, {useState} from "react";
 import useFetch from "../../hooks/useFetch";
 import Spinner from "../../components/Spinner";
@@ -75,6 +76,8 @@ const Integrations = () => {
   return (
     <Container>
       <h3>Integrations</h3>
+      <AutomationPanel />
+      <h4>Tablet integrations</h4>
       <Card>
         <Table striped bordered hover className="mb-0">
           <thead>

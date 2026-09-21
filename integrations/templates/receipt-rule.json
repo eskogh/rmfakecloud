@@ -1,0 +1,11 @@
+[
+  {
+    "id": "receipt-processing",
+    "name": "Receipt processing",
+    "enabled": true,
+    "user_id": "REPLACE_WITH_USER_ID",
+    "event": "document.updated",
+    "filters": [{ "field": "document.name", "operator": "equals", "value": "Receipts" }],
+    "integration_id": "REPLACE_WITH_INTEGRATION_ID"
+  }
+]

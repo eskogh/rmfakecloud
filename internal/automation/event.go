@@ -43,6 +43,7 @@ type Data struct {
 	Source   string    `json:"source,omitempty"`
 }
 type Event struct {
+	TargetID  string    `json:"-"`
 	Version   string    `json:"version"`
 	ID        string    `json:"id"`
 	Event     string    `json:"event"`
